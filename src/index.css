@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.leaflet-container {
+  font-family: inherit;
+}
+
+.custom-marker {
+  background: transparent;
+  border: none;
+}
+
+.custom-marker svg {
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+}
