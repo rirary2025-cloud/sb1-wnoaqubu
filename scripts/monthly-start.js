@@ -21,6 +21,32 @@ async function main() {
 
   const drive = getDriveClient();
 
+  // 診断1: サービスアカウントのメールアドレスを表示
+  const saJson = process.env.GOOGLE_SA_JSON;
+  const creds = JSON.parse(saJson);
+  console.log(`🔑 サービスアカウント: ${creds.client_email}`);
+
+  const { FOLDER_IDS } = require('./drive-utils');
+
+  // 診断2: ルートフォルダ（株式会社Rirary）アクセステスト
+  try {
+    const root = await drive.files.get({ fileId: FOLDER_IDS.root, fields: 'id, name', supportsAllDrives: true });
+    console.log(`✅ ルートフォルダOK: ${root.data.name} (${root.data.id})`);
+  } catch (e) {
+    console.error(`❌ ルートフォルダNG (${FOLDER_IDS.root}): ${e.message}`);
+  }
+
+  // 診断3: 月次管理フォルダアクセステスト
+  try {
+    const monthly = await drive.files.get({ fileId: FOLDER_IDS.monthly, fields: 'id, name', supportsAllDrives: true });
+    console.log(`✅ 月次フォルダOK: ${monthly.data.name} (${monthly.data.id})`);
+  } catch (e) {
+    console.error(`❌ 月次フォルダNG (${FOLDER_IDS.monthly}): ${e.message}`);
+    console.error(`   → 以下のメールに「株式会社Rirary」フォルダを「編集者」で共有してください:`);
+    console.error(`   → ${creds.client_email}`);
+    throw e;
+  }
+
   // 当月フォルダを取得または作成
   const monthFolderId = await getOrCreateMonthFolder(drive, year, month);
 
