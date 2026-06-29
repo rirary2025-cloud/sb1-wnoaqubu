@@ -36,14 +36,19 @@ async function main() {
     console.error(`❌ ルートフォルダNG (${FOLDER_IDS.root}): ${e.message}`);
   }
 
-  // 診断3: 月次管理フォルダアクセステスト
+  // 診断3: ルートフォルダの子フォルダ一覧（段階ナビゲーションのテスト）
   try {
-    const monthly = await drive.files.get({ fileId: FOLDER_IDS.monthly, fields: 'id, name', supportsAllDrives: true });
-    console.log(`✅ 月次フォルダOK: ${monthly.data.name} (${monthly.data.id})`);
+    const children = await drive.files.list({
+      q: `'${FOLDER_IDS.root}' in parents and trashed=false`,
+      fields: 'files(id, name)',
+      spaces: 'drive',
+      includeItemsFromAllDrives: true,
+      supportsAllDrives: true,
+    });
+    const names = children.data.files.map(f => f.name).join(', ');
+    console.log(`✅ ルート子フォルダ (${children.data.files.length}件): ${names}`);
   } catch (e) {
-    console.error(`❌ 月次フォルダNG (${FOLDER_IDS.monthly}): ${e.message}`);
-    console.error(`   → 以下のメールに「株式会社Rirary」フォルダを「編集者」で共有してください:`);
-    console.error(`   → ${creds.client_email}`);
+    console.error(`❌ ルート子フォルダ取得NG: ${e.message}`);
     throw e;
   }
 

@@ -130,7 +130,10 @@ async function createDoc(drive, parentId, name, content) {
 }
 
 async function getOrCreateMonthFolder(drive, year, month) {
-  const yearFolderId = await findOrCreateFolder(drive, `${year}年`, FOLDER_IDS.monthly);
+  // ルートから段階的にナビゲート（サービスアカウントは直接共有フォルダのみ files.get 可能なため）
+  const ekeieiId = await findOrCreateFolder(drive, '07_経営企画室', FOLDER_IDS.root);
+  const monthlyId = await findOrCreateFolder(drive, '📅 月次管理', ekeieiId);
+  const yearFolderId = await findOrCreateFolder(drive, `${year}年`, monthlyId);
   const monthFolderId = await findOrCreateFolder(drive, `${month}月`, yearFolderId);
   return monthFolderId;
 }
