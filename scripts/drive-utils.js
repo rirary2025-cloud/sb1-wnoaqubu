@@ -47,6 +47,8 @@ async function findFolder(drive, name, parentId) {
     q: `name='${escaped}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`,
     fields: 'files(id, name)',
     spaces: 'drive',
+    includeItemsFromAllDrives: true,
+    supportsAllDrives: true,
   });
   return res.data.files[0] || null;
 }
@@ -63,6 +65,7 @@ async function findOrCreateFolder(drive, name, parentId) {
       mimeType: 'application/vnd.google-apps.folder',
       parents: [parentId],
     },
+    supportsAllDrives: true,
     fields: 'id, name',
   });
   console.log(`📁 フォルダ作成: ${name} (${res.data.id})`);
@@ -75,6 +78,8 @@ async function fileExists(drive, name, parentId) {
     q: `name='${escaped}' and '${parentId}' in parents and trashed=false`,
     fields: 'files(id)',
     spaces: 'drive',
+    includeItemsFromAllDrives: true,
+    supportsAllDrives: true,
   });
   return res.data.files.length > 0;
 }
@@ -95,6 +100,7 @@ async function createSpreadsheet(drive, parentId, name, headerRow) {
       mimeType: 'text/csv',
       body: Readable.from([csvContent]),
     },
+    supportsAllDrives: true,
     fields: 'id, name',
   });
   console.log(`✅ シート作成: ${name} (${res.data.id})`);
@@ -116,6 +122,7 @@ async function createDoc(drive, parentId, name, content) {
       mimeType: 'text/plain',
       body: Readable.from([Buffer.from(content, 'utf-8')]),
     },
+    supportsAllDrives: true,
     fields: 'id, name',
   });
   console.log(`✅ ドキュメント作成: ${name} (${res.data.id})`);
