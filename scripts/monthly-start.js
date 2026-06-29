@@ -21,28 +21,29 @@ async function main() {
 
   const drive = getDriveClient();
 
-  // 診断: サービスアカウントのメールアドレスを表示
+  // 診断1: サービスアカウントのメールアドレスを表示
+  const saJson = process.env.GOOGLE_SA_JSON;
+  const creds = JSON.parse(saJson);
+  console.log(`🔑 サービスアカウント: ${creds.client_email}`);
+
+  const { FOLDER_IDS } = require('./drive-utils');
+
+  // 診断2: ルートフォルダ（株式会社Rirary）アクセステスト
   try {
-    const saJson = process.env.GOOGLE_SA_JSON;
-    const creds = JSON.parse(saJson);
-    console.log(`🔑 サービスアカウント: ${creds.client_email}`);
+    const root = await drive.files.get({ fileId: FOLDER_IDS.root, fields: 'id, name', supportsAllDrives: true });
+    console.log(`✅ ルートフォルダOK: ${root.data.name} (${root.data.id})`);
   } catch (e) {
-    console.log('🔑 サービスアカウントメール取得失敗');
+    console.error(`❌ ルートフォルダNG (${FOLDER_IDS.root}): ${e.message}`);
   }
 
-  // 診断: 月次管理フォルダへのアクセステスト
+  // 診断3: 月次管理フォルダアクセステスト
   try {
-    const { FOLDER_IDS } = require('./drive-utils');
-    const meta = await drive.files.get({
-      fileId: FOLDER_IDS.monthly,
-      fields: 'id, name',
-      supportsAllDrives: true,
-    });
-    console.log(`✅ フォルダアクセスOK: ${meta.data.name} (${meta.data.id})`);
+    const monthly = await drive.files.get({ fileId: FOLDER_IDS.monthly, fields: 'id, name', supportsAllDrives: true });
+    console.log(`✅ 月次フォルダOK: ${monthly.data.name} (${monthly.data.id})`);
   } catch (e) {
-    console.error(`❌ フォルダアクセスNG: ${e.message}`);
-    console.error(`   → Google Driveの「📅 月次管理」フォルダをサービスアカウントに共有してください`);
-    console.error(`   → 上記🔑のメールアドレスに「編集者」権限で共有`);
+    console.error(`❌ 月次フォルダNG (${FOLDER_IDS.monthly}): ${e.message}`);
+    console.error(`   → 以下のメールに「株式会社Rirary」フォルダを「編集者」で共有してください:`);
+    console.error(`   → ${creds.client_email}`);
     throw e;
   }
 
