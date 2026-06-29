@@ -3,7 +3,6 @@
  * GitHub Actions から Google Drive を操作するための共通関数
  */
 const { google } = require('googleapis');
-const { Readable } = require('stream');
 
 // 株式会社Riraly Google Drive フォルダID定数
 const FOLDER_IDS = {
@@ -89,25 +88,43 @@ async function createSpreadsheet(drive, parentId, name, headerRow) {
     console.log(`⏭  スキップ（既存）: ${name}`);
     return null;
   }
-  const csvContent = headerRow + '\n';
+  // 空のSpreadsheetを作成（CSVアップロードなし＝SA容量を使わない）
   const res = await drive.files.create({
     requestBody: {
       name,
       parents: [parentId],
       mimeType: 'application/vnd.google-apps.spreadsheet',
     },
-    media: {
-      mimeType: 'text/csv',
-      body: Readable.from([csvContent]),
-    },
     supportsAllDrives: true,
     fields: 'id, name',
   });
-  console.log(`✅ シート作成: ${name} (${res.data.id})`);
-  return res.data.id;
+  const fileId = res.data.id;
+  console.log(`✅ シート作成: ${name} (${fileId})`);
+
+  // Sheets APIでヘッダー行を書き込む
+  try {
+    const saJson = process.env.GOOGLE_SA_JSON;
+    const credentials = JSON.parse(saJson);
+    const auth = new google.auth.GoogleAuth({
+      credentials,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+    const sheets = google.sheets({ version: 'v4', auth });
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: fileId,
+      range: 'A1',
+      valueInputOption: 'RAW',
+      requestBody: { values: [headerRow.split(',')] },
+    });
+    console.log(`📝 ヘッダー書き込み完了: ${name}`);
+  } catch (e) {
+    console.warn(`⚠️  ヘッダー書き込み失敗（後で手動設定可）: ${e.message}`);
+  }
+
+  return fileId;
 }
 
-async function createDoc(drive, parentId, name, content) {
+async function createDoc(drive, parentId, name) {
   if (await fileExists(drive, name, parentId)) {
     console.log(`⏭  スキップ（既存）: ${name}`);
     return null;
@@ -117,10 +134,6 @@ async function createDoc(drive, parentId, name, content) {
       name,
       parents: [parentId],
       mimeType: 'application/vnd.google-apps.document',
-    },
-    media: {
-      mimeType: 'text/plain',
-      body: Readable.from([Buffer.from(content, 'utf-8')]),
     },
     supportsAllDrives: true,
     fields: 'id, name',
