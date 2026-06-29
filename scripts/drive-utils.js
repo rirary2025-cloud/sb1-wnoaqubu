@@ -28,12 +28,6 @@ function getJSTDate() {
   };
 }
 
-function getYearFolderId(year) {
-  if (year === 2025) return FOLDER_IDS.year2025;
-  if (year === 2026) return FOLDER_IDS.year2026;
-  // 2027年以降は月次管理直下に都度作成
-  return null;
-}
 
 function getDriveClient() {
   const saJson = process.env.GOOGLE_SA_JSON;
@@ -129,12 +123,7 @@ async function createDoc(drive, parentId, name, content) {
 }
 
 async function getOrCreateMonthFolder(drive, year, month) {
-  let yearFolderId = getYearFolderId(year);
-
-  if (!yearFolderId) {
-    yearFolderId = await findOrCreateFolder(drive, `${year}年`, FOLDER_IDS.monthly);
-  }
-
+  const yearFolderId = await findOrCreateFolder(drive, `${year}年`, FOLDER_IDS.monthly);
   const monthFolderId = await findOrCreateFolder(drive, `${month}月`, yearFolderId);
   return monthFolderId;
 }
