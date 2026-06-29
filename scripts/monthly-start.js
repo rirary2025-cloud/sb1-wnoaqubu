@@ -21,6 +21,31 @@ async function main() {
 
   const drive = getDriveClient();
 
+  // 診断: サービスアカウントのメールアドレスを表示
+  try {
+    const saJson = process.env.GOOGLE_SA_JSON;
+    const creds = JSON.parse(saJson);
+    console.log(`🔑 サービスアカウント: ${creds.client_email}`);
+  } catch (e) {
+    console.log('🔑 サービスアカウントメール取得失敗');
+  }
+
+  // 診断: 月次管理フォルダへのアクセステスト
+  try {
+    const { FOLDER_IDS } = require('./drive-utils');
+    const meta = await drive.files.get({
+      fileId: FOLDER_IDS.monthly,
+      fields: 'id, name',
+      supportsAllDrives: true,
+    });
+    console.log(`✅ フォルダアクセスOK: ${meta.data.name} (${meta.data.id})`);
+  } catch (e) {
+    console.error(`❌ フォルダアクセスNG: ${e.message}`);
+    console.error(`   → Google Driveの「📅 月次管理」フォルダをサービスアカウントに共有してください`);
+    console.error(`   → 上記🔑のメールアドレスに「編集者」権限で共有`);
+    throw e;
+  }
+
   // 当月フォルダを取得または作成
   const monthFolderId = await getOrCreateMonthFolder(drive, year, month);
 
