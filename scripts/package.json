@@ -1,0 +1,14 @@
+{
+  "name": "riraly-automation-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "株式会社Riraly 月次自動化スクリプト",
+  "scripts": {
+    "monthly-start": "node monthly-start.js",
+    "monthly-mid": "node monthly-mid.js",
+    "monthly-end": "node monthly-end.js"
+  },
+  "dependencies": {
+    "googleapis": "^144.0.0"
+  }
+}

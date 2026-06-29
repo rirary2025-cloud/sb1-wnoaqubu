@@ -1,0 +1,39 @@
+name: 月中ルーティン（デジタルマーケティング部）
+
+on:
+  schedule:
+    # 毎月15日 00:00 UTC = 09:00 JST
+    - cron: '0 0 15 * *'
+  workflow_dispatch:
+
+jobs:
+  monthly-mid:
+    name: 月中タスク実行
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 依存パッケージをインストール
+        working-directory: scripts
+        run: npm install
+
+      - name: 月中ルーティン実行
+        working-directory: scripts
+        env:
+          GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
+        run: node monthly-mid.js
+
+      - name: 実行結果をサマリーに記録
+        if: always()
+        run: |
+          echo "## 月中ルーティン実行結果" >> $GITHUB_STEP_SUMMARY
+          echo "- 実行日時: $(TZ='Asia/Tokyo' date '+%Y年%m月%d日 %H:%M JST')" >> $GITHUB_STEP_SUMMARY
+          echo "- ステータス: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
